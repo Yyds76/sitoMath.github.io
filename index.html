@@ -360,6 +360,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     plugins: {
                         legend: {
                             display: true,
@@ -400,6 +401,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     plugins: {
                         legend: {
                             display: true,
@@ -429,21 +431,22 @@
 
         // 初始化控制器
         function initControls() {
-            const controls = [
-                { id: 'freq1', display: 'freq1-display', variable: 'freq1' },
-                { id: 'freq2', display: 'freq2-display', variable: 'freq2' },
-                { id: 'freq3', display: 'freq3-display', variable: 'freq3' }
-            ];
-
-            controls.forEach(control => {
-                const slider = document.getElementById(control.id);
-                const display = document.getElementById(control.display);
-                
-                slider.addEventListener('input', function() {
-                    window[control.variable] = parseInt(this.value);
-                    display.textContent = this.value + ' Hz';
-                    updateCharts();
-                });
+            document.getElementById('freq1').addEventListener('input', function() {
+                freq1 = parseInt(this.value);
+                document.getElementById('freq1-display').textContent = this.value + ' Hz';
+                updateCharts();
+            });
+            
+            document.getElementById('freq2').addEventListener('input', function() {
+                freq2 = parseInt(this.value);
+                document.getElementById('freq2-display').textContent = this.value + ' Hz';
+                updateCharts();
+            });
+            
+            document.getElementById('freq3').addEventListener('input', function() {
+                freq3 = parseInt(this.value);
+                document.getElementById('freq3-display').textContent = this.value + ' Hz';
+                updateCharts();
             });
         }
 
@@ -500,18 +503,31 @@
             button.style.display = 'none';
             
             try {
-                const canvas = await html2canvas(document.getElementById('report'), {
+                const element = document.getElementById('report');
+                const canvas = await html2canvas(element, {
                     scale: 2,
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    backgroundColor: '#ffffff'
                 });
                 
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgWidth = 210;
-                const imgHeight = canvas.height * imgWidth / canvas.width;
                 
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                // Calculate dimensions to fit A4
+                const pdfWidth = 210; // A4 width in mm
+                const pdfHeight = 297; // A4 height in mm
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                // If image is taller than A4, scale it down
+                if (imgHeight > pdfHeight) {
+                    const scaledWidth = (canvas.width * pdfHeight) / canvas.height;
+                    pdf.addImage(imgData, 'PNG', 0, 0, scaledWidth, pdfHeight);
+                } else {
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                }
+                
                 pdf.save('複數信號處理報告_司徒嘉哲.pdf');
             } catch (error) {
                 alert('PDF 生成失敗，請稍後再試');
